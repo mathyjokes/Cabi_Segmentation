@@ -1,0 +1,66 @@
+---
+title: "cabi_data_restructuring"
+output: html_document
+---
+
+Import required libraries
+```{r}
+library(tidyverse)
+library(readr)
+library(lubridate)
+library(fastDummies)
+library(janitor)
+```
+
+Now it's time to make this data useful for analysis
+# Cabi locations downloaded from https://opendata.dc.gov/datasets/capital-bike-share-locations/data
+```{r}
+cabi_data <- read_csv('data/full_cabi_data.csv')
+cabi_locations <- read_csv('data/Capital_Bike_Share_Locations.csv') %>% 
+  rename(start_station = ADDRESS) %>% 
+  select(start_station, OWNER) %>% 
+  distinct()
+
+cabi %>% 
+  arrange(desc(duration)) %>% 
+  slice(1)
+
+85812/60/60
+
+cabi_data %>% 
+  glimpse()
+
+cabi_data %>% 
+  summarize(duration_mean = mean(duration, na.rm = T)/60,
+            duration_median = median(duration, na.rm = T)/60) %>% 
+  glimpse()
+
+
+cabi <- cabi_data %>% 
+  
+  # Select only the data I want. But this is mostly categorical (aka not helpful for the type of analysis I have to do) so move on
+  select(duration, start_date, end_date, start_station, end_station, bike_number,member_type) %>% 
+  
+  # get rid of the duplicates and missing values
+  distinct() %>% 
+  drop_na() %>% 
+  
+  # because my little machine can't handle more, have to subset to a random sample of 100,000 rides
+  sample_n(100000) %>% 
+ 
+  # first, create a dummy variable for members
+  mutate(member = ifelse(member_type %in% c('Member','member'), 1, 0)) %>% 
+  
+  # then, get only the hour that people started their trip
+  mutate(start_hour = hour(start_date)) %>% 
+  
+  # finally, I want to know generally where people are coming from. So I'll make a dummy variable for if a user started their journer in DC or not 
+  left_join(., cabi_locations) %>% 
+  mutate(dc = ifelse(!is.na(OWNER), 1, 0)) %>% 
+  select(-c(start_station, end_station, start_date, end_date, bike_number, member_type, OWNER))
+  
+  
+# Writing out the analysis-ready version because it took a time and a half to process through
+write_csv(cabi, 'data/cabi_sample.csv')
+
+```

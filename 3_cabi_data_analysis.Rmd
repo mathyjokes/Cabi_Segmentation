@@ -1,0 +1,207 @@
+---
+title: "cabi_covid"
+output: html_document
+---
+
+Import required libraries
+```{r}
+library(tidyverse)
+library(readr)
+library(janitor)
+library(cluster)
+library(factoextra)
+library(metricsgraphics)
+library(readr)
+library(NbClust)
+
+cabi <- read_csv('data/cabi_sample.csv')
+```
+
+
+Now let's do some exploratory analysis to figure out what is happening in the data
+```{r}
+cabi %>% 
+  glimpse()
+
+cabi %>% 
+  summarize(duration_mean = mean(duration, na.rm = T)/60,
+            duration_median = median(duration, na.rm = T)/60) %>% 
+  glimpse()
+
+ggsave('6_trip_duration_per_start_hour.png',
+ggplot(cabi) +
+  geom_point(aes(x = start_hour, y= duration), alpha = 0.1) +
+  labs(title = 'Duration of Trip per Start Hour',
+       y = 'Duration (in seconds)',
+       x = 'Start Hour') +
+  scale_y_continuous(labels = scales::comma)
+,height = 7, width = 10)
+
+ggsave('7_shorter_trip_duration_per_start_hour.png',
+cabi %>% 
+  filter(duration <= 7200) %>% 
+  ggplot() +
+    geom_point(aes(x = start_hour, y= duration), alpha = 0.1) +
+    labs(title = 'Duration of Short(er) Trips per Start Hour',
+         y = 'Duration (in seconds)',
+         x = 'Start Hour') +
+    scale_y_continuous(labels = scales::comma)
+,height = 7, width = 10)
+
+
+ggsave('8_short_trip_duration_per_memtype.png',
+cabi %>% 
+  filter(duration <= 1800) %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  ggplot() +
+    geom_boxplot(aes(x = member, y= duration, group = member)) +
+    labs(title = 'Duration of Short Trips per Member Type',
+         y = 'Duration (in seconds)',
+         x = 'Member Type') +
+    scale_y_continuous(labels = scales::comma)
+,height = 7, width = 10)
+
+ggsave('8b_trip_duration_per_memtype.png',
+cabi %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  ggplot() +
+    geom_boxplot(aes(x = member, y= duration, group = member)) +
+    labs(title = 'Duration of Trips per Member Type',
+         y = 'Duration (in seconds)',
+         x = 'Member Type') +
+    scale_y_continuous(labels = scales::comma)
+,height = 7, width = 10)
+
+ggsave('8c_shorter_trip_duration_per_memtype.png',
+cabi %>% 
+  filter(duration <= 7200) %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  ggplot() +
+    geom_boxplot(aes(x = member, y= duration, group = member)) +
+    labs(title = 'Duration of Short(er) Trips per Member Type',
+         y = 'Duration (in seconds)',
+         x = 'Member Type') +
+    scale_y_continuous(labels = scales::comma)
+,height = 7, width = 10)
+
+cabi %>% 
+  mutate(ride_length = ifelse(duration <= 7200, 'Under 30 Mins', 'Over 30 Mins')) %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  count(ride_length, member)
+
+ggsave('9_start_hour_per_memtype.png',
+cabi %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  ggplot() +
+    geom_boxplot(aes(x = member, y= start_hour, group = member)) +
+    labs(title = 'Start Hour by Member Type',
+         y = 'Start Hour',
+         x = 'Member Type')
+,height = 7, width = 10)
+
+ggsave('10_start_location_per_memtype.png',
+cabi %>% 
+  mutate(member = ifelse(member == 1, 'Member', 'Casual Rider')) %>% 
+  mutate(dc = ifelse(dc == 1, 'In DC', 'Outside DC')) %>% 
+  count(member, dc) %>% 
+  ggplot() +
+    geom_tile(aes(x = member, y= dc, fill = n)) +
+    labs(title = 'Start Location by Member Type',
+         y = 'Start Location',
+         x = 'Member Type',
+         fill = 'Number of Rides')
+,height = 7, width = 10)
+
+16091*100/(16091 + 854)
+```
+
+Now let's run some K-means to try and cluster these rides into identifable segments! (thanks to https://towardsdatascience.com/customer-segmentation-5f25247eb7e2 and https://uc-r.github.io/kmeans_clustering for their tutorials)
+```{r}
+# Before getting started we need to scale the non-dummy columns (duration and start_hour!)
+cabi_final <- cabi %>% 
+  mutate(duration = as.numeric(scale(duration))) %>% 
+  mutate(start_hour = as.numeric(scale(start_hour)))
+
+# Try 3 common methods of choosing the optimum number of clusters for k-means analysis
+ggsave('11_kmeans_elbow_method.png',
+cabi_final %>% 
+  sample_n(1000) %>% 
+  fviz_nbclust(., kmeans, method = "wss") +
+  labs(subtitle = "Elbow method")
+,height = 7, width = 10)
+
+ggsave('12_kmeans_silhouette_method.png',
+cabi_final %>% 
+  sample_n(1000) %>% 
+  fviz_nbclust(., kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+,height = 7, width = 10)
+
+ggsave('13_kmeans_gapstat_method.png',
+cabi_final %>% 
+  sample_n(1000) %>% 
+  fviz_nbclust(., kmeans, nstart = 25,  method = "gap_stat")+
+  labs(subtitle = "Gap statistic method")
+,height = 7, width = 10)
+```
+
+
+```{r}
+
+# Let's look at PCA to get an understanding of how many components explain most of the variability. It's the first 3!
+pca <- prcomp(t(cabi_final), scale. = T, center = T)
+ggsave('14_pca_component_variability.png',
+fviz_eig(pca) + 
+  theme_bw() + scale_y_continuous(labels = scales::comma) +
+  ggtitle(label='Principal Component Analysis')
+,height = 7, width= 10)
+
+# Choosing 4 clusters
+kclust4 <- kmeans(cabi_final, 4, nstart = 25)
+
+# Visualize PCA with 4 clusters
+cluster.pc4 <- prcomp(cabi_final, center = FALSE, scale. = FALSE)$x %>% as.data.frame()
+cluster.pc4$kmeans.cluster <- factor(kclust4$cluster)
+
+# This looks like it should have been clustered a different way.. 
+ggsave('15_pca_4_clusters.png',
+ggplot(cluster.pc4,aes(x=PC1,y=PC2,color=kmeans.cluster))+
+  geom_point() +
+  theme_bw() + scale_y_continuous(labels = scales::comma) + 
+  ggtitle(label='PCA with 4 cluster K-means')
+,height = 7, width = 10)
+
+# 4 clusters seems best to separate the data, although it is odd they aren't separating on the clear lines seen in the image above
+
+# Draw elipses to show the clusters more clearly
+ggsave('16_rider_4_clusters.png',
+fviz_cluster(kclust4, data = cabi_final, geom = "point",
+             stand = FALSE, ellipse.type = "norm") + 
+  theme_bw() + scale_y_continuous(labels = scales::comma) +
+  ggtitle(label='4 Rider Clusters')
+,height = 7, width= 10)
+
+ggsave('17_rider_4_clusters_shifted_axes.png',
+fviz_cluster(kclust4, data = cabi_final, geom = "point",
+             stand = FALSE, ellipse.type = "norm", axes = c(2, 3)) + 
+  theme_bw() + scale_y_continuous(labels = scales::comma) +
+  ggtitle(label='4 Rider Clusters')
+,height = 7, width= 10)
+
+```
+
+
+```{r}
+#Customer segmentation through aggeration of results by mean (4 clusters)
+aggregate(cabi_final, by = list(kclust4$cluster), mean)
+
+# First thing that jumps out is the mean of duration (how is that possible because I thought I standardized??). Obvisouly, Group 2 has the highest duration by far. We see that these are less likely to be members, and more likely to start their trips later in the day.
+
+# For the two "member" groups (1 and 3), we see that duration is relatively short, and that these trips are taken in the afternoon or early morning. These are likely commuting trips.
+
+# Group 4, the other "likely casual" group also take longer trips. Tourists don't know how to make the most use of the bikes! Or their pricing structure is different and encourages longer trips.
+
+# Whether the starting station is in DC has little impact on the grouping, likely because most stations are in DC so there would have to be particularly distinct behavior from suburban riders.
+
+```
+

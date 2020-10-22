@@ -1,0 +1,42 @@
+---
+title: "cabi_data_download"
+output: html_document
+---
+
+Import required libraries
+```{r}
+library(tidyverse)
+library(readr)
+library(janitor)
+```
+
+
+Download Cabi data. Note that this takes some time!
+```{r}
+############### Unzip the Cabi files ###############
+cabi_months <- list.files('cabi_data/', pattern = 'zip')
+for(month in cabi_months){
+  unzip (paste0('cabi_data/',month), exdir = 'cabi_data')
+}
+
+############### Read in the csvs. NOTE THESE NEXT TWO STEPS TAKE A FEW MINUTES! ###############
+cabi_files <- list.files('data/cabi_data_downloaded/', pattern = 'csv')
+cabi_data <- c()
+for(file in cabi_files){
+  temp <- read_csv(paste0('data/cabi_data_downloaded/', file)) %>% 
+    mutate(file = file) %>% 
+    mutate_all(as.character)
+  cabi_data <- bind_rows(cabi_data, temp)
+}
+
+###### Account for Capital Bikeshare changing their data structure
+cabi_data <- cabi_data %>% 
+  clean_names() %>% 
+  unite(col = 'start_date', c(start_date, started_at), na.rm = T) %>% 
+  unite(col = 'end_date', c(end_date, ended_at), na.rm = T) %>%
+  unite(col = 'member_type', c(member_type, member_casual), na.rm = T)
+
+##### Write a csv because that processing took a long time!! #####
+write.csv(cabi_data, 'data/full_cabi_data.csv')
+```
+
