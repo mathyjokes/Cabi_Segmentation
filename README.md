@@ -118,13 +118,17 @@ So now that we have our clusters, what can we say about them? To make sense of i
 
 
 I’ll name each one of these segments and describe their characteristics.
-Group 1: Early morning tourists 
+
+**Group 1: Early morning tourists**
  - Rides in this group are more likely to be taken in the morning by casual members. They are of relatively long duration, indicating that they are maybe rides being taken by tourists to sightsee.
-Group 2: Commuters
+
+**Group 2: Commuters**
  - Rides in this group are short, early, and taken by members with year-long passes. These are likely to be commuters using the Capital Bikeshare to get to their offices.
-Group 3: Late afternoon tourists
+
+**Group 3: Late afternoon tourists**
  - Rides in this group are likely to be taken by casual riders in the afternoon. Interestingly, rides in this group are most likely to be started outside of Washington, DC (in the surrounding suburbs). Due to the prevalence of casual riders but the relatively short duration of the trips, these could be rides taken after lunch to get to a new tourist destination.
-Group 4: Pleasure riders
+
+**Group 4: Pleasure riders**
  - Rides in this group are by far the longest and tend to start the latest in the day. Although I was expecting long rides to skew toward casual riders, rides in this group are equally as likely to be taken by year-long members. Due to the length of the rides in this group, these could be pleasure-seekers out for an afternoon ride.
 
 My initial effort was to identify casual riders that behaved like members so that Capital Bikeshare could expend effort converting them into full-time riders. 
