@@ -195,13 +195,26 @@ fviz_cluster(kclust4, data = cabi_final, geom = "point",
 #Customer segmentation through aggeration of results by mean (4 clusters)
 aggregate(cabi_final, by = list(kclust4$cluster), mean)
 
-# First thing that jumps out is the mean of duration (how is that possible because I thought I standardized??). Obvisouly, Group 2 has the highest duration by far. We see that these are less likely to be members, and more likely to start their trips later in the day.
+# That's a bit hard to understand so let me put this in terms of the unscaled variables
+cabi$cluster <- kclust4$cluster
 
-# For the two "member" groups (1 and 3), we see that duration is relatively short, and that these trips are taken in the afternoon or early morning. These are likely commuting trips.
+cabi %>% 
+  mutate(duration_minutes = duration/60,
+         duration_hours = duration/60/60) %>% 
+  group_by(cluster) %>%
+  summarise_all(mean)
 
-# Group 4, the other "likely casual" group also take longer trips. Tourists don't know how to make the most use of the bikes! Or their pricing structure is different and encourages longer trips.
+cabi %>% 
+  count(cluster)
 
-# Whether the starting station is in DC has little impact on the grouping, likely because most stations are in DC so there would have to be particularly distinct behavior from suburban riders.
+cabi %>% 
+  filter(cluster == 2) %>% 
+  count(start_hour) %>% 
+  ggplot() +
+    geom_line(aes(x = start_hour, y = n)) +
+    labs(title = "Start Hours of 'Pleasure Rides'",
+         x = 'Start Hour',
+         y = 'Count')
 
 ```
 
