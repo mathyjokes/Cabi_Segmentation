@@ -108,28 +108,23 @@ This is a much more natural visualization to understand the 4 clusters we’ve b
 
 ### *Results*
 So now that we have our clusters, what can we say about them? To make sense of it all, we look at the mean of each of the 4 groups identified.
-|          | Duration | Member |	Start Hour | DC   |
-| :------- |:-------- | :----- |:----------- | :--- |
-| Group 1  | 6.41	    | 0.29   | -0.22	     | 0.87 |
-| Group 2  | -0.14	  | 0.86	 | -0.006	     | 0.86 |
-| Group 3	 | 1.67	    | 0.28   | 0.13	       | 0.83 |
-| Group 4	 | 25.59	  | 0.5	   | 0.19	       | 0.87 |
 
+![cluster_means](https://github.com/mathyjokes/Cabi_Segmentation/blob/main/images/cluster_results.PNG)
 
 
 I’ll name each one of these segments and describe their characteristics.
 
-**Group 1: Early morning tourists**
- - Rides in this group are more likely to be taken in the morning by casual members. They are of relatively long duration, indicating that they are maybe rides being taken by tourists to sightsee.
+**Group 1: Tourists**
+ - Rides in this group are most likely to be taken in the afternoon (~2pm) by casual riders. They are of relatively long duration, indicating that tourists may be using the bikes to sightsee.
 
-**Group 2: Commuters**
- - Rides in this group are short, early, and taken by members with year-long passes. These are likely to be commuters using the Capital Bikeshare to get to their offices.
+**Group 2: Pleasure Riders**
+ - This is by far the smallest and most diverse group – the length of rides seems to be the key factor for these rides. Although I was expecting long rides to skew toward casual riders, rides in this group are equally as likely to be taken by year-long members. Due to the length of the rides in this group, these could be pleasure-seekers out for an afternoon ride.
 
-**Group 3: Late afternoon tourists**
- - Rides in this group are likely to be taken by casual riders in the afternoon. Interestingly, rides in this group are most likely to be started outside of Washington, DC (in the surrounding suburbs). Due to the prevalence of casual riders but the relatively short duration of the trips, these could be rides taken after lunch to get to a new tourist destination.
+**Group 3: Morning Commuters**
+ - Rides in this group are short, early, and taken by members with year-long passes. With an average start time around 9 am, these rides are likely taken by commuters using the Capital Bikeshare to get to their offices.
 
-**Group 4: Pleasure riders**
- - Rides in this group are by far the longest and tend to start the latest in the day. Although I was expecting long rides to skew toward casual riders, rides in this group are equally as likely to be taken by year-long members. Due to the length of the rides in this group, these could be pleasure-seekers out for an afternoon ride.
+**Group 4: Afternoon Commuters**
+ - Rides in this group are also short, are taken by members with year-long passes, and tend to start around 5 pm. These are probably commuters taking bikes from their offices home or, if they're lucky, to happy hour.
 
 My initial effort was to identify casual riders that behaved like members so that Capital Bikeshare could expend effort converting them into full-time riders. 
 After conducting my analysis, I no longer think this should even be an effort by Capital Bikeshare, as so many more casual riders incur extra fees! 
